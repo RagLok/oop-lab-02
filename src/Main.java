@@ -1,5 +1,3 @@
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -7,8 +5,10 @@ import java.util.*;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         AnnotatedClass target = new AnnotatedClass();
+        ArgumentFactory factory = new ArgumentFactory();
 
         Method[] methods = target.getClass().getDeclaredMethods();
 
@@ -31,8 +31,15 @@ public class Main {
             // доступ к priv/prot
             method.setAccessible(true);
 
-            // создаем аргументы
-            Object[] arguments = buildArguments(method.getParameterTypes());
+            // создаем аргументы любых типов
+            Object[] arguments;
+            try {
+                arguments = factory.buildArguments(method.getParameterTypes());
+            } catch (IllegalArgumentException e) {
+                System.out.println("    не удалось подготовить аргументы: " + e.getMessage());
+                System.out.println();
+                continue;
+            }
 
             for (int i = 0; i < times; i++) {
                 try {
@@ -48,41 +55,5 @@ public class Main {
             }
             System.out.println();
         }
-    }
-
-    private static Object[] buildArguments(Class<?>[] types) {
-        Object[] args = new Object[types.length];
-        for (int i = 0; i < types.length; i++) {
-            args[i] = defaultValue(types[i]);
-        }
-        return args;
-    }
-
-    private static Object defaultValue(Class<?> type) {
-        if (type == int.class)
-            return 2;
-        if (type == long.class )
-            return 2L;
-        if (type == double.class)
-            return 1.5;
-        if (type == float.class)
-            return 1.5f;
-        if (type == short.class)
-            return (short) 1;
-        if (type == byte.class)
-            return (byte) 1;
-        if (type == boolean.class)
-            return true;
-        if (type == char.class)
-            return 'A';
-
-        if (type == String.class)
-            return "abc";
-
-        if (type.isArray())
-            return Array.newInstance(type.getComponentType(), 0);
-
-        throw new IllegalArgumentException(
-                "Не удалось создать значение для типа " + type.getName());
     }
 }
